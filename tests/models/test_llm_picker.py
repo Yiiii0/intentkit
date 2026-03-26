@@ -2,7 +2,11 @@ from unittest.mock import patch
 
 import pytest
 
-from intentkit.models.llm_picker import pick_default_model, pick_summarize_model
+from intentkit.models.llm_picker import (
+    pick_default_model,
+    pick_long_context_model,
+    pick_summarize_model,
+)
 
 # ── pick_summarize_model ─────────────────────────────────────────────
 
@@ -94,3 +98,18 @@ def test_pick_default_model_fallback_when_none():
 
         result = pick_default_model()
         assert result == "gpt-5-mini"
+
+
+def test_pick_models_use_forge_when_only_forge_available():
+    with patch("intentkit.models.llm.config") as mock_config:
+        mock_config.google_api_key = None
+        mock_config.openai_api_key = None
+        mock_config.openrouter_api_key = None
+        mock_config.xai_api_key = None
+        mock_config.deepseek_api_key = None
+        mock_config.minimax_api_key = None
+        mock_config.forge_api_key = "forge-key"
+
+        assert pick_default_model() == "OpenAI/gpt-4o-mini"
+        assert pick_summarize_model() == "OpenAI/gpt-4o-mini"
+        assert pick_long_context_model() == "OpenAI/gpt-4o-mini"

@@ -155,6 +155,10 @@ class Config:
         self.xai_api_key: str | None = self.load("XAI_API_KEY")
         self.minimax_api_key: str | None = self.load("MINIMAX_API_KEY")
         self.openrouter_api_key: str | None = self.load("OPENROUTER_API_KEY")
+        self.forge_api_key: str | None = self.load("FORGE_API_KEY")
+        self.forge_api_base: str = self.load(
+            "FORGE_API_BASE", "https://api.forge.tensorblock.co/v1"
+        )
         # OpenAI Compatible provider
         self.openai_compatible_api_key: str | None = self.load(
             "OPENAI_COMPATIBLE_API_KEY"

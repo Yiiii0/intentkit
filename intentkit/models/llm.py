@@ -56,6 +56,14 @@ def _parse_optional_decimal(value: str | None) -> Decimal | None:
     return Decimal(value) if value else None
 
 
+def _has_api_key(value: Any) -> bool:
+    """Return True only for non-empty string API keys.
+
+    This avoids treating test doubles (e.g., bare MagicMock attrs) as configured keys.
+    """
+    return isinstance(value, str) and bool(value.strip())
+
+
 def load_default_llm_models() -> dict[str, "LLMModelInfo"]:
     """Load default LLM models from a CSV file.
 
@@ -187,6 +195,7 @@ class LLMProvider(str, Enum):
     DEEPSEEK = "deepseek"
     XAI = "xai"
     OPENROUTER = "openrouter"
+    FORGE = "forge"
     MINIMAX = "minimax"
     OLLAMA = "ollama"
     OPENAI_COMPATIBLE = "openai_compatible"
@@ -200,6 +209,7 @@ class LLMProvider(str, Enum):
             self.DEEPSEEK: bool(config.deepseek_api_key),
             self.XAI: bool(config.xai_api_key),
             self.OPENROUTER: bool(config.openrouter_api_key),
+            self.FORGE: _has_api_key(getattr(config, "forge_api_key", None)),
             self.MINIMAX: bool(config.minimax_api_key),
             self.OLLAMA: True,  # Ollama usually doesn't need a key
             self.OPENAI_COMPATIBLE: bool(
@@ -218,6 +228,7 @@ class LLMProvider(str, Enum):
             self.DEEPSEEK: "DeepSeek",
             self.XAI: "xAI",
             self.OPENROUTER: "OpenRouter",
+            self.FORGE: "Forge",
             self.MINIMAX: "MiniMax",
             self.OLLAMA: "Ollama",
             self.OPENAI_COMPATIBLE: config.openai_compatible_provider,
@@ -893,6 +904,40 @@ class MiniMaxLLM(LLMModel):
         return ChatAnthropic(**kwargs)
 
 
+class ForgeLLM(LLMModel):
+    """Forge LLM configuration (OpenAI-compatible API)."""
+
+    @override
+    async def create_instance(self, params: dict[str, Any] = {}) -> BaseChatModel:
+        """Create and return a ChatOpenAI instance configured for Forge."""
+        from langchain_openai import ChatOpenAI
+
+        info = await self.model_info()
+
+        kwargs: dict[str, Any] = {
+            "model_name": info.id,
+            "openai_api_key": config.forge_api_key,
+            "openai_api_base": config.forge_api_base,
+            "timeout": info.timeout,
+            "max_retries": 3,
+            # Forge exposes /v1/chat/completions as the compatibility surface.
+            "use_responses_api": False,
+        }
+
+        if info.supports_temperature:
+            kwargs["temperature"] = self.temperature
+
+        if info.supports_frequency_penalty:
+            kwargs["frequency_penalty"] = self.frequency_penalty
+
+        if info.supports_presence_penalty:
+            kwargs["presence_penalty"] = self.presence_penalty
+
+        kwargs.update(params)
+
+        return ChatOpenAI(**kwargs)
+
+
 class OpenAICompatibleLLM(LLMModel):
     """OpenAI Compatible LLM configuration."""
 
@@ -955,6 +1000,7 @@ async def create_llm_model(
         LLMProvider.DEEPSEEK: DeepseekLLM,
         LLMProvider.XAI: XAILLM,
         LLMProvider.OPENROUTER: OpenRouterLLM,
+        LLMProvider.FORGE: ForgeLLM,
         LLMProvider.OLLAMA: OllamaLLM,
         LLMProvider.OPENAI: OpenAILLM,
         LLMProvider.MINIMAX: MiniMaxLLM,

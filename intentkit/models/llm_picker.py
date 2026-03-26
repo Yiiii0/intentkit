@@ -12,13 +12,15 @@ def pick_summarize_model() -> str:
     # Priority order based on performance and cost effectiveness:
     # 1. Google Gemini 3 Flash: Best blend of speed and quality for summarization
     # 2. GPT-5 Mini: High quality fallback
-    # 3. GLM 4.7 Flash: Fast and cheap alternative
-    # 4. Grok: Good performance if available
-    # 5. DeepSeek: Final fallback
+    # 3. Forge GPT-4o Mini: OpenAI-compatible stable fallback
+    # 4. GLM 4.7 Flash: Fast and cheap alternative
+    # 5. Grok: Good performance if available
+    # 6. DeepSeek: Final fallback
     order: list[tuple[str, LLMProvider]] = [
         ("z-ai/glm-4.7-flash", LLMProvider.OPENROUTER),
         ("gemini-3.1-flash-lite-preview", LLMProvider.GOOGLE),
         ("gpt-5-mini", LLMProvider.OPENAI),
+        ("OpenAI/gpt-4o-mini", LLMProvider.FORGE),
         ("grok-4-1-fast-non-reasoning", LLMProvider.XAI),
         ("deepseek-chat", LLMProvider.DEEPSEEK),
     ]
@@ -39,13 +41,15 @@ def pick_default_model() -> str:
     # 1. MiniMax M2.7: Best blend of quality and cost
     # 2. Google Gemini 3 Flash: Best blend of speed and quality
     # 3. GPT-5 Mini: High quality fallback
-    # 4. Grok: Good performance if available
-    # 5. DeepSeek: Final fallback
+    # 4. Forge GPT-4o Mini: OpenAI-compatible stable fallback
+    # 5. Grok: Good performance if available
+    # 6. DeepSeek: Final fallback
     order: list[tuple[str, LLMProvider]] = [
         ("MiniMax-M2.7", LLMProvider.MINIMAX),
         ("minimax/minimax-m2.7", LLMProvider.OPENROUTER),
         ("google/gemini-3-flash-preview", LLMProvider.GOOGLE),
         ("gpt-5-mini", LLMProvider.OPENAI),
+        ("OpenAI/gpt-4o-mini", LLMProvider.FORGE),
         ("grok-4-1-fast-non-reasoning", LLMProvider.XAI),
         ("deepseek-chat", LLMProvider.DEEPSEEK),
     ]
@@ -70,6 +74,7 @@ def pick_long_context_model() -> str:
         ("grok-4-1-fast-non-reasoning", LLMProvider.XAI),
         ("qwen/qwen3.5-flash-02-23", LLMProvider.OPENROUTER),
         ("gpt-5-nano", LLMProvider.OPENAI),
+        ("OpenAI/gpt-4o-mini", LLMProvider.FORGE),
         ("deepseek-chat", LLMProvider.DEEPSEEK),
     ]
 
